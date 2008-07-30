@@ -1,0 +1,24 @@
+<?php
+// $Id$
+
+require_once('JsonRpcServer.php');
+
+function jsonrpc_server_server_info() {
+  return array(
+    '#name' => 'JSON-RPC',
+    '#path' => 'json-rpc',
+  );
+}
+
+function jsonrpc_server_server() {
+  $in = isset($_POST['method'])?$_POST:$_GET;
+  $server = new JsonRpcServer($in);
+  return $server->handle();
+}
+
+function jsonrpc_server_add_javascript() {
+  global $base_url;
+  $path = drupal_get_path("module", "jsonrpc_server");
+  drupal_add_js($path ."/jsonrpc_server.js");
+  drupal_add_js(array('basePath' => base_path()), 'setting');
+}

@@ -1,0 +1,8 @@
+; $Id$
+name = JSON-RPC Server
+description = Provides an JSON-RPC server.
+package = Services - servers
+dependencies = services
+version = "5.x-1.x-dev"
+project = "jsonrpc_server"
+
