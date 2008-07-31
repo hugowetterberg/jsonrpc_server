@@ -10,7 +10,7 @@ Drupal.service = function(method, parameters, callback, id) {
     'success': function(data) {
       parsed = Drupal.parseJson(data);
       callback(parsed['result'], parsed['error'], parsed['id']);
-    },
+    }
   });
 }
 
