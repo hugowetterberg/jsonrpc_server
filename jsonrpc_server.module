@@ -1,8 +1,6 @@
 <?php
 // $Id$
 
-require_once('JsonRpcServer.php');
-
 function jsonrpc_server_server_info() {
   return array(
     '#name' => 'JSON-RPC',
@@ -11,6 +9,8 @@ function jsonrpc_server_server_info() {
 }
 
 function jsonrpc_server_server() {
+  require_once('JsonRpcServer.php');
+  $GLOBALS['devel_shutdown'] = false;
   $in = isset($_POST['method'])?$_POST:$_GET;
   $server = new JsonRpcServer($in);
   return $server->handle();
