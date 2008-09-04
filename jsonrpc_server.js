@@ -3,7 +3,7 @@ Drupal.service = function(method, parameters, callback, id) {
   var call = {'method': method, 'params': JSON.stringify(parameters)};
   if (id != null)
     call['id'] = id;
-  $.ajax({
+  jQuery.ajax({
     'url': Drupal.settings.basePath +"?q=services/json-rpc",
     'type': "POST",
     'data': call,
