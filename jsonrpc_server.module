@@ -17,10 +17,6 @@ function jsonrpc_server_server() {
 }
 
 function jsonrpc_server_add_javascript() {
-  static $added;
-  if (!$added) {
-    $path = drupal_get_path("module", "jsonrpc_server");
-    drupal_add_js($path ."/jsonrpc_server.js");
-    $added = true;
-  }
+  $path = drupal_get_path("module", "jsonrpc_server");
+  drupal_add_js($path ."/jsonrpc_server.js");
 }
