@@ -140,13 +140,18 @@ class JsonRpcServer{
     }
     
     //Call service method
-    $result = services_method_call($this->method['#method'], $this->args);
-    if (is_array($result) && isset($result['#error']) && $result['#error'] === TRUE) {
-      return $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $result['#message']);
+    try {
+      $result = services_method_call($this->method['#method'], $this->args);
+      if (is_array($result) && isset($result['#error']) && $result['#error'] === TRUE) {
+        return $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $result['#message']);
+      }
+      else {
+        return $this->result($result);
+      }
+    } catch (Exception $e) {
+      return $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $e->getMessage());
     }
-    else {
-      return $this->result($result);
-    }
+    
   }
   
   private function array_is_assoc(&$arr) {
