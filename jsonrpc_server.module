@@ -12,6 +12,7 @@ function jsonrpc_server_server() {
   require_once('JsonRpcServer.php');
   $GLOBALS['devel_shutdown'] = false;
   $in = isset($_POST['method'])?$_POST:$_GET;
+  $in['method'] = trim($in['method'], ' "');
   $server = new JsonRpcServer($in);
   return $server->handle();
 }
