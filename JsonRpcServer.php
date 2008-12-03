@@ -22,7 +22,7 @@ class JsonRpcServer{
   private $id, $method, $in, $version, $major_version;
   private $service_method, $params, $args;
   
-  public function JsonRpcServer($in) {
+  public function __construct($in) {
     $this->in = $in;
     $this->method_name = $in['method'];
     $this->id = $in['id'];
@@ -139,6 +139,9 @@ class JsonRpcServer{
       }
     }
     
+    // We are returning JSON, so tell the browser.
+    drupal_set_header('Content-Type: application/json; charset=utf-8');
+
     //Call service method
     try {
       $result = services_method_call($this->method['#method'], $this->args);
@@ -209,6 +212,7 @@ class JsonRpcServer{
     $this->response_version($response);
     $this->response_id($response);
     
-    return drupal_to_js($response);
+    //Using the current development version of Drupal 7:s drupal_to_js instead
+    return str_replace(array("<", ">", "&"), array('\x3c', '\x3e', '\x26'), json_encode($response));
   }
 }
