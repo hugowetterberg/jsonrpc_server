@@ -1,4 +1,4 @@
-// $Id$
+// $Id: jsonrpc_server.js,v 1.1 2009/02/12 16:33:54 hugowetterberg Exp $
 Drupal.service = function(method, parameters, callback, id) {
   var call = {'method': method, 'params': JSON.stringify(parameters)};
   if (id != null)
