@@ -24,13 +24,11 @@ class JsonRpcServer{
   
   public function __construct($in) {
     $this->in = $in;
-    $this->method_name = $in['method'];
-    $this->id = $in['id'];
-    $this->version = isset($in['jsonrpc'])?$in['jsonrpc']:'1.1';
-    $this->major_version = intval(substr($this->version,0,1));
-    if (!empty($this->in['params'])) {
-      $this->params = json_decode($this->in['params'], True);
-    }
+    $this->method_name = isset($in['method']) ? $in['method'] : NULL;
+    $this->id = isset($in['id']) ? $in['id'] : NULL;
+    $this->version = isset($in['jsonrpc']) ? $in['jsonrpc'] : '1.1';
+    $this->major_version = intval(substr($this->version, 0, 1));
+    $this->params = isset($in['params']) ? $in['params'] : NULL;
   }
   
   public function handle() {
@@ -59,13 +57,21 @@ class JsonRpcServer{
       for ($i=0; $i<$arg_count; $i++) {
         $arg = $this->method['#args'][$i];
         if (!$arg['#optional']) {
-          if (empty($this->in['params'])) {
-            return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters recieved, the method '@method' has required parameters.", 
-              array('@method'=>$this->method_name)));
-          }
-          else {
-            return $this->error(JSONRPC_ERROR_PARSE, t("Missing parameters, the likely reason is malformed json, the method '@method' has required parameters.", 
-              array('@method'=>$this->method_name)));
+          if (empty($this->params)) {
+            // We have required parameter, but we don't have any.
+            if (is_array($this->params)) {
+              // The request has probably been parsed correctly if params is an array,
+              // just tell the client that we're missing parameters.
+              return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters recieved, the method '@method' has required parameters.", 
+                array('@method'=>$this->method_name)));
+            }
+            else {
+              // If params isn't an array we probably have a syntax error in the json.
+              // Tell the client that there was a error while parsing the json.
+              // TODO: parse errors should be caught earlier
+              return $this->error(JSONRPC_ERROR_PARSE, t("No parameters recieved, the likely reason is malformed json, the method '@method' has required parameters.", 
+                array('@method'=>$this->method_name)));
+            }
           }
         }
       }
