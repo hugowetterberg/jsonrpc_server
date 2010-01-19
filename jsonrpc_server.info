@@ -1,4 +1,4 @@
-; $Id: jsonrpc_server.info,v 1.1 2009/02/12 16:33:54 hugowetterberg Exp $
+; $Id: jsonrpc_server.info,v 1.2.2.1 2010/01/19 07:49:29 hugowetterberg Exp $
 name = "JSON-RPC Server"
 description = "Provides an JSON-RPC server."
 package = "Services - servers"

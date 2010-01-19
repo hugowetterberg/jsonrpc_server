@@ -1,5 +1,5 @@
 <?php
-// $Id: JsonRpcServer.php,v 1.1 2009/02/12 16:33:54 hugowetterberg Exp $
+// $Id: JsonRpcServer.php,v 1.1.2.1 2010/01/19 07:49:29 hugowetterberg Exp $
 
 // References: 
 // JSON-RPC 1.1 draft: http://json-rpc.org/wd/JSON-RPC-1-1-WD-20060807.html

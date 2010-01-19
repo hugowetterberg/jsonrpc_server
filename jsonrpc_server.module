@@ -1,5 +1,5 @@
 <?php
-// $Id: jsonrpc_server.module,v 1.1 2009/02/12 16:33:54 hugowetterberg Exp $
+// $Id: jsonrpc_server.module,v 1.1.2.1 2010/01/19 07:49:29 hugowetterberg Exp $
 
 function jsonrpc_server_server_info() {
   return array(
