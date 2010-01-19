@@ -11,7 +11,51 @@ function jsonrpc_server_server_info() {
 function jsonrpc_server_server() {
   require_once('JsonRpcServer.php');
   $GLOBALS['devel_shutdown'] = false;
-  $in = isset($_POST['method'])?$_POST:$_GET;
+
+  // TODO: Add settings page with options for disabling features that doesn't
+  // follow the JSON-RPC spec. One thing that definitely could be disabled is
+  // the GET request handling, regardless of conformance to spec.
+
+  $method = $_SERVER['REQUEST_METHOD'];
+  switch ($method) {
+    case 'POST':
+      switch($_SERVER['CONTENT_TYPE']) {
+        // Handling of a standard JSON-RPC call
+        case 'application/json':
+          // We'll use the inputstream module if it's installed because
+          // otherwise it's only possible to read the input stream once.
+          // And other parts of services or drupal might want to access it.
+          if (module_exists('inputstream')) {
+            $body = file_get_contents('drupal://input');
+          }
+          else {
+            $body = file_get_contents('php://input');
+          }
+          $in = json_decode($body, TRUE);
+        break;
+        // It's not included in the JSON-RPC standard but we support
+        // sending only the params as JSON.
+        default:
+          $in = $_POST;
+          $in['params'] = json_decode($in['params'], TRUE);
+        break;
+      }
+      break;
+    case 'GET':
+      // This handling of get requests doesn't implement the JSON-RPC spec
+      // fully. Multiple parameters sharing names are not collapsed into
+      // arrays. See
+      // http://json-rpc.org/wd/JSON-RPC-1-1-WD-20060807.html#GetProcedureCall
+      // for details.
+      // TODO: Implement custom GET-parameter parsing
+      $in = array(
+        'jsonrpc' => '1.1',
+        'method' => basename($_GET['q']),
+        'params' => $_GET,
+      );
+    break;
+  }
+
   $in['method'] = trim($in['method'], ' "');
   $server = new JsonRpcServer($in);
   return $server->handle();
