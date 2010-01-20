@@ -34,7 +34,7 @@ class JsonRpcServer{
   public function handle() {
     //A method is required, no matter what
     if(empty($this->method_name)) {
-      return $this->error(JSONRPC_ERROR_REQUEST, t("The received JSON not a valid JSON-RPC Request"));
+      $this->error(JSONRPC_ERROR_REQUEST, t("The received JSON not a valid JSON-RPC Request"));
     }
     
     $endpoint = services_get_server_info('endpoint');
@@ -44,7 +44,7 @@ class JsonRpcServer{
     $args = array();
 
     if (!isset($this->method)) { // No method found is a fatal error
-      return $this->error(JSONRPC_ERROR_PROCEDURE_NOT_FOUND, t("Invalid method @method", 
+      $this->error(JSONRPC_ERROR_PROCEDURE_NOT_FOUND, t("Invalid method @method", 
         array('@method' => $request)));
     }
     
@@ -59,14 +59,14 @@ class JsonRpcServer{
             if (is_array($this->params)) {
               // The request has probably been parsed correctly if params is an array,
               // just tell the client that we're missing parameters.
-              return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters recieved, the method '@method' has required parameters.", 
+              $this->error(JSONRPC_ERROR_PARAMS, t("No parameters recieved, the method '@method' has required parameters.", 
                 array('@method'=>$this->method_name)));
             }
             else {
               // If params isn't an array we probably have a syntax error in the json.
               // Tell the client that there was a error while parsing the json.
               // TODO: parse errors should be caught earlier
-              return $this->error(JSONRPC_ERROR_PARSE, t("No parameters recieved, the likely reason is malformed json, the method '@method' has required parameters.", 
+              $this->error(JSONRPC_ERROR_PARSE, t("No parameters recieved, the likely reason is malformed json, the method '@method' has required parameters.", 
                 array('@method'=>$this->method_name)));
             }
           }
@@ -94,7 +94,7 @@ class JsonRpcServer{
       foreach ($this->params as $key => $value) {
         if ($this->major_version==1 && preg_match('/^\d+$/',$key)) { //A positional argument (only allowed in v1.1 calls)
           if ($key >= $arg_count) { //Index outside bounds
-            return $this->error(JSONRPC_ERROR_PARAMS, t("Positional parameter with a position outside the bounds (index: @index) recieved", 
+            $this->error(JSONRPC_ERROR_PARAMS, t("Positional parameter with a position outside the bounds (index: @index) recieved", 
               array('@index'=>$key)));
           }
           else {
@@ -103,7 +103,7 @@ class JsonRpcServer{
         }
         else { //Associative key
           if (!isset($arg_dict[$key])) { //Unknown parameter
-            return $this->error(JSONRPC_ERROR_PARAMS, t("Unknown named parameter '@name' recieved", 
+            $this->error(JSONRPC_ERROR_PARAMS, t("Unknown named parameter '@name' recieved", 
               array('@name'=>$key)));
           }
           else {
@@ -115,7 +115,7 @@ class JsonRpcServer{
     else { //Non associative arrays can be mapped directly
       $param_count = count($this->params);
       if ($param_count > $arg_count) {
-        return $this->error(JSONRPC_ERROR_PARAMS, t("Too many arguments recieved, the method '@method' only takes '@num' argument(s)", 
+        $this->error(JSONRPC_ERROR_PARAMS, t("Too many arguments recieved, the method '@method' only takes '@num' argument(s)", 
           array('@method'=>$this->method_name, '@num'=> $arg_count )));
       }
       $this->args = $this->params;
@@ -134,15 +134,15 @@ class JsonRpcServer{
 
         //Only array-type parameters accepts arrays
         if (is_array($val) && $arg['type']!='array'){
-          return $this->error_wrong_type($arg, 'array');
+          $this->error_wrong_type($arg, 'array');
         }
         //Check that int and float value type arguments get numeric values
         else if(($arg['type']=='int' || $arg['type']=='float') && !is_numeric($val)) {
-          return $this->error_wrong_type($arg,'string');
+          $this->error_wrong_type($arg,'string');
         }
       }
       else if (!$arg['optional']) { //Trigger error if a required parameter is missing
-        return $this->error(JSONRPC_ERROR_PARAMS, t("Argument '@name' is required but was not recieved", array('@name'=>$arg['name'])));
+        $this->error(JSONRPC_ERROR_PARAMS, t("Argument '@name' is required but was not recieved", array('@name'=>$arg['name'])));
       }
     }
     
@@ -152,16 +152,13 @@ class JsonRpcServer{
     //Call service method
     try {
       $result = services_controller_execute($this->method, $this->args);
-      if (is_array($result) && isset($result['error']) && $result['error'] === TRUE) {
-        return $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $result['message']);
-      }
-      else {
-        return $this->result($result);
-      }
-    } catch (Exception $e) {
-      return $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $e->getMessage());
+      return $this->result($result);
+    } catch (ServicesException $e) {
+      $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $e->getMessage(), $e->getData());
     }
-    
+    catch (Exception $e) {
+      $this->error(JSONRPC_ERROR_INTERNAL_ERROR, $e->getMessage());
+    }
   }
   
   private function array_is_assoc(&$arr) {
@@ -196,13 +193,16 @@ class JsonRpcServer{
     return $this->response($response);
   }
 
-  private function error($code, $message) {
+  private function error($code, $message, $data = NULL) {
     $response = array('error' => array('name' => 'JSONRPCError', 'code' => $code, 'message' => $message));
-    return $this->response($response);
+    if ($data) {
+      $response['data'] = $data;
+    }
+    throw new ServicesException($message, $code, $response);
   }
 
   private function error_wrong_type(&$arg, $type){
-    return $this->error(JSONRPC_ERROR_PARAMS, t("The argument '@arg' should be a @type, not @used_type",
+    $this->error(JSONRPC_ERROR_PARAMS, t("The argument '@arg' should be a @type, not @used_type",
         array(
           '@arg' => $arg['name'],
           '@type' => $arg['type'],
@@ -211,7 +211,7 @@ class JsonRpcServer{
     ));
   }
   
-  private function response($response) {
+  public function response($response) {
     // Check if this is a 2.0 notification call
     if($this->major_version==2 && empty($this->id))
       return;

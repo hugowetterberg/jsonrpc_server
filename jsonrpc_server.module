@@ -58,7 +58,11 @@ function jsonrpc_server_server() {
 
   $in['method'] = trim($in['method'], ' "');
   $server = new JsonRpcServer($in);
-  return $server->handle();
+  try {
+    return $server->handle();
+  } catch (ServicesException $e) {
+    return $server->response($e->getData());
+  }
 }
 
 function jsonrpc_server_add_javascript() {
