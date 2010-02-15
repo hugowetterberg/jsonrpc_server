@@ -19,7 +19,10 @@ function jsonrpc_server_server() {
   $method = $_SERVER['REQUEST_METHOD'];
   switch ($method) {
     case 'POST':
-      switch($_SERVER['CONTENT_TYPE']) {
+      // Omit charset parameter
+      list($content_type) = explode(';', $_SERVER['CONTENT_TYPE'], 2);
+
+      switch($content_type) {
         // Handling of a standard JSON-RPC call
         case 'application/json':
           // We'll use the inputstream module if it's installed because
