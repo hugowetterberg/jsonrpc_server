@@ -62,14 +62,14 @@ class JsonRpcServer{
             if (is_array($this->params)) {
               // The request has probably been parsed correctly if params is an array,
               // just tell the client that we're missing parameters.
-              return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters recieved, the method '@method' has required parameters.", 
+              return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters received, the method '@method' has required parameters.",
                 array('@method'=>$this->method_name)));
             }
             else {
               // If params isn't an array we probably have a syntax error in the json.
               // Tell the client that there was a error while parsing the json.
               // TODO: parse errors should be caught earlier
-              return $this->error(JSONRPC_ERROR_PARSE, t("No parameters recieved, the likely reason is malformed json, the method '@method' has required parameters.", 
+              return $this->error(JSONRPC_ERROR_PARSE, t("No parameters received, the likely reason is malformed json, the method '@method' has required parameters.",
                 array('@method'=>$this->method_name)));
             }
           }
@@ -97,7 +97,7 @@ class JsonRpcServer{
       foreach ($this->params as $key => $value) {
         if ($this->major_version==1 && preg_match('/^\d+$/',$key)) { //A positional argument (only allowed in v1.1 calls)
           if ($key >= $arg_count) { //Index outside bounds
-            return $this->error(JSONRPC_ERROR_PARAMS, t("Positional parameter with a position outside the bounds (index: @index) recieved", 
+            return $this->error(JSONRPC_ERROR_PARAMS, t("Positional parameter with a position outside the bounds (index: @index) received",
               array('@index'=>$key)));
           }
           else {
@@ -106,7 +106,7 @@ class JsonRpcServer{
         }
         else { //Associative key
           if (!isset($arg_dict[$key])) { //Unknown parameter
-            return $this->error(JSONRPC_ERROR_PARAMS, t("Unknown named parameter '@name' recieved", 
+            return $this->error(JSONRPC_ERROR_PARAMS, t("Unknown named parameter '@name' received",
               array('@name'=>$key)));
           }
           else {
@@ -118,7 +118,7 @@ class JsonRpcServer{
     else { //Non associative arrays can be mapped directly
       $param_count = count($this->params);
       if ($param_count > $arg_count) {
-        return $this->error(JSONRPC_ERROR_PARAMS, t("Too many arguments recieved, the method '@method' only takes '@num' argument(s)", 
+        return $this->error(JSONRPC_ERROR_PARAMS, t("Too many arguments received, the method '@method' only takes '@num' argument(s)",
           array('@method'=>$this->method_name, '@num'=> $arg_count )));
       }
       $this->args = $this->params;
@@ -132,7 +132,7 @@ class JsonRpcServer{
       
       if (isset($val)) { //If we have data
         //Only array-type parameters accepts arrays
-        if (is_array($val) && $arg['type']!='array'){
+        if (is_array($val) && $arg['type']!='array' && !($this->is_assoc($val) && $arg['type'] == 'struct')){
           return $this->error_wrong_type($arg, 'array');
         }
         //Check that int and float value type arguments get numeric values
@@ -141,12 +141,21 @@ class JsonRpcServer{
         }
       }
       else if (!$arg['optional']) { //Trigger error if a required parameter is missing
-        return $this->error(JSONRPC_ERROR_PARAMS, t("Argument '@name' is required but was not recieved", array('@name'=>$arg['name'])));
+        return $this->error(JSONRPC_ERROR_PARAMS, t("Argument '@name' is required but was not received", array('@name'=>$arg['name'])));
       }
     }
     
     // We are returning JSON, so tell the browser.
     drupal_set_header('Content-Type: application/json; charset=utf-8');
+
+    // Services assumes parameter positions to match the method callback's
+    // function signature so we need to sort arguments by position (key)
+    // before passing them to the method callback. The best solution here would
+    // be to pad optional parameters using a #default key in the hook_service
+    // method definitions instead of requiring all parameters to be present, as
+    // we do now.
+    // For reference: http://drupal.org/node/715044
+    ksort($this->args);
 
     //Call service method
     try {
@@ -219,6 +228,10 @@ class JsonRpcServer{
     $this->response_id($response);
     
     //Using the current development version of Drupal 7:s drupal_to_js instead
-    return str_replace(array("<", ">", "&"), array('\x3c', '\x3e', '\x26'), json_encode($response));
+    return json_encode($response);
+  }
+
+  private function is_assoc($array) {
+    return (is_array($array) && 0 !== count(array_diff_key($array, array_keys(array_keys($array)))));
   }
 }
