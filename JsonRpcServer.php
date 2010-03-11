@@ -62,14 +62,14 @@ class JsonRpcServer{
             if (is_array($this->params)) {
               // The request has probably been parsed correctly if params is an array,
               // just tell the client that we're missing parameters.
-              return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters recieved, the method '@method' has required parameters.", 
+              return $this->error(JSONRPC_ERROR_PARAMS, t("No parameters received, the method '@method' has required parameters.",
                 array('@method'=>$this->method_name)));
             }
             else {
               // If params isn't an array we probably have a syntax error in the json.
               // Tell the client that there was a error while parsing the json.
               // TODO: parse errors should be caught earlier
-              return $this->error(JSONRPC_ERROR_PARSE, t("No parameters recieved, the likely reason is malformed json, the method '@method' has required parameters.", 
+              return $this->error(JSONRPC_ERROR_PARSE, t("No parameters received, the likely reason is malformed json, the method '@method' has required parameters.",
                 array('@method'=>$this->method_name)));
             }
           }
@@ -97,7 +97,7 @@ class JsonRpcServer{
       foreach ($this->params as $key => $value) {
         if ($this->major_version==1 && preg_match('/^\d+$/',$key)) { //A positional argument (only allowed in v1.1 calls)
           if ($key >= $arg_count) { //Index outside bounds
-            return $this->error(JSONRPC_ERROR_PARAMS, t("Positional parameter with a position outside the bounds (index: @index) recieved", 
+            return $this->error(JSONRPC_ERROR_PARAMS, t("Positional parameter with a position outside the bounds (index: @index) received",
               array('@index'=>$key)));
           }
           else {
@@ -106,7 +106,7 @@ class JsonRpcServer{
         }
         else { //Associative key
           if (!isset($arg_dict[$key])) { //Unknown parameter
-            return $this->error(JSONRPC_ERROR_PARAMS, t("Unknown named parameter '@name' recieved", 
+            return $this->error(JSONRPC_ERROR_PARAMS, t("Unknown named parameter '@name' received",
               array('@name'=>$key)));
           }
           else {
@@ -118,7 +118,7 @@ class JsonRpcServer{
     else { //Non associative arrays can be mapped directly
       $param_count = count($this->params);
       if ($param_count > $arg_count) {
-        return $this->error(JSONRPC_ERROR_PARAMS, t("Too many arguments recieved, the method '@method' only takes '@num' argument(s)", 
+        return $this->error(JSONRPC_ERROR_PARAMS, t("Too many arguments received, the method '@method' only takes '@num' argument(s)",
           array('@method'=>$this->method_name, '@num'=> $arg_count )));
       }
       $this->args = $this->params;
@@ -141,7 +141,7 @@ class JsonRpcServer{
         }
       }
       else if (!$arg['optional']) { //Trigger error if a required parameter is missing
-        return $this->error(JSONRPC_ERROR_PARAMS, t("Argument '@name' is required but was not recieved", array('@name'=>$arg['name'])));
+        return $this->error(JSONRPC_ERROR_PARAMS, t("Argument '@name' is required but was not received", array('@name'=>$arg['name'])));
       }
     }
     
