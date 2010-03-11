@@ -149,6 +149,15 @@ class JsonRpcServer{
     // We are returning JSON, so tell the browser.
     drupal_set_header('Content-Type: application/json; charset=utf-8');
 
+    // Services assumes parameter positions to match the method callback's
+    // function signature so we need to sort arguments by position (key)
+    // before passing them to the method callback. The best solution here would
+    // be to pad optional parameters using a #default key in the hook_service
+    // method definitions instead of requiring all parameters to be present, as
+    // we do now.
+    // For reference: http://drupal.org/node/715044
+    ksort($this->args);
+
     //Call service method
     try {
       $result = services_controller_execute($this->method, $this->args);
