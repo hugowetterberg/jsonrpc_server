@@ -133,7 +133,7 @@ class JsonRpcServer{
         }
 
         //Only array-type parameters accepts arrays
-        if (is_array($val) && $arg['type']!='array'){
+        if (is_array($val) && $arg['type']!='array' && !($this->is_assoc($val) && $arg['type'] == 'struct')){
           $this->error_wrong_type($arg, 'array');
         }
         //Check that int and float value type arguments get numeric values
@@ -230,5 +230,9 @@ class JsonRpcServer{
     
     //Using the current development version of Drupal 7:s drupal_to_js instead
     return json_encode($response);
+  }
+
+  private function is_assoc($array) {
+    return (is_array($array) && 0 !== count(array_diff_key($array, array_keys(array_keys($array)))));
   }
 }
