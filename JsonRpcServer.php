@@ -220,6 +220,6 @@ class JsonRpcServer{
     $this->response_id($response);
     
     //Using the current development version of Drupal 7:s drupal_to_js instead
-    return str_replace(array("<", ">", "&"), array('\x3c', '\x3e', '\x26'), json_encode($response));
+    return json_encode($response);
   }
 }
